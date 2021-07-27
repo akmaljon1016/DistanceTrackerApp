@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
-import com.example.distancetrackerapp.Permissions.hasLocationPermission
-import com.example.distancetrackerapp.Permissions.requestLocationPermission
+import com.example.distancetrackerapp.utils.Permissions.hasLocationPermission
+import com.example.distancetrackerapp.utils.Permissions.requestLocationPermission
 import com.example.distancetrackerapp.databinding.FragmentPermissionBinding
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
