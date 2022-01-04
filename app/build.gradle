@@ -68,6 +68,7 @@ dependencies {
 
     //lifecycle
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
 
     //FusedLocation
     implementation 'com.google.android.gms:play-services-location:17.0.0'

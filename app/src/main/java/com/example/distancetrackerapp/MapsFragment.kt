@@ -1,8 +1,11 @@
 package com.example.distancetrackerapp
 
 import android.annotation.SuppressLint
+import android.content.Context.LOCATION_SERVICE
+import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Color
+import android.location.LocationManager
 import androidx.fragment.app.Fragment
 
 import android.os.Bundle
@@ -12,7 +15,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.getSystemService
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -40,7 +47,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -51,6 +57,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
     private var _binding: FragmentMapsBinding? = null
     private val binding get() = _binding!!
     private lateinit var map: GoogleMap
+    var locationmanager: LocationManager? = null
 
     val started = MutableLiveData(false)
 
@@ -71,6 +78,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         _binding = FragmentMapsBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = this
         binding.tracking = this
+        locationmanager = requireActivity().getSystemService(LOCATION_SERVICE) as LocationManager
 
         binding.startButton.setOnClickListener { onStartButtonClick() }
         binding.stopButton.setOnClickListener {
@@ -250,7 +258,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             calculateTheDistance(locationList),
             calculateElapsedTime(startTime, stopTime)
         )
-        lifecycleScope.launch {
+        lifecycleScope.launchWhenCreated {
             delay(2500)
             val directions = MapsFragmentDirections.actionMapsFragmentToResultFragment(result)
             findNavController().navigate(directions)
@@ -290,11 +298,16 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
     }
 
     override fun onMyLocationButtonClick(): Boolean {
-        binding.hintTextview.animate().alpha(0f).duration = 1500
-        lifecycleScope.launch {
-            delay(2500)
-            binding.hintTextview.hide()
-            binding.startButton.show()
+        if (locationmanager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            binding.hintTextview.animate().alpha(0f).duration = 1500
+            lifecycleScope.launch {
+                delay(2500)
+                binding.hintTextview.hide()
+                binding.startButton.show()
+            }
+
+        } else {
+            showGPSDisabledAlertToUser()
         }
         return false
     }
@@ -327,6 +340,27 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
 
     override fun onMarkerClick(p0: Marker): Boolean {
         return true
+    }
+
+    private fun showGPSDisabledAlertToUser() {
+        val alertDialog: AlertDialog.Builder = AlertDialog.Builder(requireActivity())
+        alertDialog.setMessage("GPS is disabled in your device.Would you like to enable it")
+            .setCancelable(false)
+            .setPositiveButton("Goto settings Page to Enable GPS",
+                object : DialogInterface.OnClickListener {
+                    override fun onClick(p0: DialogInterface?, p1: Int) {
+                        val intent =
+                            Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        startActivity(intent)
+                    }
+                })
+            .setNegativeButton("Cancel", object : DialogInterface.OnClickListener {
+                override fun onClick(p0: DialogInterface?, p1: Int) {
+                    p0?.cancel()
+                }
+            })
+        val alert: AlertDialog = alertDialog.create()
+        alert.show()
     }
 }
 
